@@ -435,8 +435,7 @@ Qed.
 End Ejercicio9.
 
 
-
-Section Ejercicio10.
+Section Naturals.
 
 Variable nat : Set.
 Variable  O  : nat.
@@ -453,64 +452,135 @@ Axiom sumS   : forall n m :nat, (sum n (S m))=(S (sum n m)).
 Axiom prod0  : forall n :nat, (prod n O)=O.
 Axiom prodS  : forall n m :nat, (prod n (S m))=(sum n (prod n m)).
 
-Axiom reflexivity: forall n: nat, n = n.
 
-Lemma symmetry: forall n m: nat, n = m -> m = n.
-Proof.
-intros n m n_e_m.
-rewrite n_e_m.
-apply (reflexivity m).
-Qed.
-
-Lemma transitivity: forall n m: nat, n = m -> exists p: nat, n = p /\ p = m.
-Proof.
-intros n m n_e_m.
-exists n.
-split.
-- apply (reflexivity n).
-- rewrite n_e_m.
-  apply (reflexivity m).
-Qed.
-
+Section Ejercicio10.
 
 Lemma L10_1: (sum (S O) (S O)) = (S (S O)).
 Proof.
-  
-Admitted.
+rewrite (sumS (S O) O).
+rewrite (sum0 (S O)).
+reflexivity.
+Qed.
 
 Lemma L10_2: forall n :nat, ~(O=n /\ (exists m :nat, n = (S m))).
 Proof.
-  
+intros n and.
+elim and.
+intros n_0 e_n_sm.
+elim e_n_sm.
+intros m n_sm.
+apply (disc m).
+rewrite <- n_0 in n_sm.
+exact n_sm.
 Qed.
 
 Lemma prod_neutro: forall n :nat, (prod n (S O)) = n.
 Proof.
-  
+intro n.
+rewrite prodS.
+rewrite prod0.
+rewrite sum0.
+reflexivity.
 Qed.
 
 Lemma diff: forall n:nat, ~(S (S n))=(S O).
 Proof.
-  
+intros n H.
+apply (inj (S n) O) in H.
+apply (disc n).
+symmetry.
+exact H.
 Qed.
 
 Lemma L10_3: forall n: nat, exists m: nat, prod n (S m) = sum n n. 
 Proof.
-  ...
+intro n; exists (S O).
+rewrite prodS; rewrite prodS.
+rewrite prod0.
+rewrite sum0.
+reflexivity.
 Qed.
 
 Lemma L10_4: forall m n: nat, n <> O -> sum m n <> O.  
 Proof.
-  ...
+intros m n n_not_0 sum_m_n.
+elim (allNat n).
+- intro n_0.
+  absurd (n = O).
+  exact n_not_0.
+  exact n_0.
+- intro e; elim e; intros.
+  rewrite <- H in sum_m_n.
+  rewrite sumS in sum_m_n.
+  apply (disc (sum m x)).
+  symmetry.
+  exact sum_m_n.
 Qed.
 
 Lemma L10_5: forall m n: nat, sum m n = O -> m = O /\ n = O.  
 Proof.
-  ...
+(* Esta prueba seria bastante mas sencilla si tuviesemos un corolario
+ * que demuestre que la suma es una operacion simetrica. *)
+intros n m sum_0.
+elim (allNat m); elim (allNat n); intros; split; try assumption.
+- rewrite H0 in sum_0.
+  rewrite sum0 in sum_0.
+  exact sum_0.
+- elim H0; intros.
+  rewrite <- H3 in sum_0.
+  rewrite sumS in sum_0.
+  elim (disc (sum n x)).
+  symmetry.
+  exact sum_0.
+- elim H0; intros.
+  rewrite <- H3 in sum_0.
+  rewrite sumS in sum_0.
+  elim (disc (sum n x)).
+  symmetry.
+  exact sum_0.
+- elim H0; intros.
+  rewrite <- H3 in sum_0.
+  rewrite sumS in sum_0.
+  elim (disc (sum n x)).
+  symmetry.
+  exact sum_0.
 Qed.
+
+Lemma aux: forall n m: nat, ~(sum (S n) m = O).
+Proof.
+intros n m.
+elim (allNat m).
+- intro m0.
+  rewrite m0.
+  rewrite sum0.
+  intro H.
+  apply (disc n).
+  symmetry.
+  exact H.
+- intro e; elim e; intros.
+  rewrite <- H.
+  rewrite sumS.
+  intro H0.
+  apply (disc (sum (S n) x)).
+  symmetry.
+  exact H0.
+Qed.
+
 
 Lemma L10_6: forall m n: nat, prod m n = O -> m = O \/ n = O.  
 Proof.
-  ...
+intros m n prod_0.
+elim (allNat n); elim (allNat m); intros.
+- left; exact H.
+- right; exact H0.
+- left; exact H.
+- elim H; intros.
+  elim H0; intros.
+  rewrite <- H3 in prod_0.
+  rewrite <- H4 in prod_0.
+  rewrite prodS in prod_0.
+  elim (aux x (prod (S x) x0)).
+  exact prod_0.
 Qed.
 
 
@@ -521,12 +591,24 @@ End Ejercicio10.
 Section Ejercicio11.
 
 Variable le : nat->nat->Prop.
-Axiom leinv: forall n m:nat, (le n m) -> n=O \/
-      (exists p:nat, (exists q:nat, n=(S p)/\ m=(S q) /\ (le p q))).
+Axiom leinv: forall n m:nat, (le n m) -> n=O \/ (exists p:nat, (exists q:nat, n=(S p)/\ m=(S q) /\ (le p q))).
 
 Lemma notle_s_o: forall n:nat, ~(le (S n) O).
 Proof.
-  
+intros n H.
+elim (leinv (S n) O).
+- intro H0.
+  apply (disc n).
+  symmetry.
+  exact H0.
+- intro e0; elim e0; intros p e1.
+  elim e1; intros q e2.
+  elim e2; intros e3 e4.
+  elim e4; intros e5 e6.
+  apply (disc q).
+  exact e5.
+- exact H.
 Qed.
 
 End Ejercicio11.
+End Naturals.
