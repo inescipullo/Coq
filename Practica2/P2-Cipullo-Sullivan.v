@@ -461,28 +461,16 @@ Qed.
 Lemma L10_5: forall m n: nat, sum m n = O -> m = O /\ n = O.  
 Proof.
 intros n m sum_0.
-elim (allNat m); elim (allNat n); intros; split; try assumption.
-- rewrite H0 in sum_0.
-  rewrite sum0 in sum_0.
-  exact sum_0.
-- elim H0; intros.
-  rewrite <- H3 in sum_0.
-  rewrite sumS in sum_0.
-  elim (disc (sum n x)).
-  symmetry.
-  exact sum_0.
-- elim H0; intros.
-  rewrite <- H3 in sum_0.
-  rewrite sumS in sum_0.
-  elim (disc (sum n x)).
-  symmetry.
-  exact sum_0.
-- elim H0; intros.
-  rewrite <- H3 in sum_0.
-  rewrite sumS in sum_0.
-  elim (disc (sum n x)).
-  symmetry.
-  exact sum_0.
+elim (allNat m); elim (allNat n); intros; split; try assumption;
+try (rewrite H0 in sum_0;
+     rewrite sum0 in sum_0;
+     exact sum_0);
+try (elim H0; intros;
+     rewrite <- H3 in sum_0;
+     rewrite sumS in sum_0;
+     elim (disc (sum n x));
+     symmetry;
+     exact sum_0).
 Qed.
 
 (* Lema auxiliar utilizado en la prueba de L10_6 *)

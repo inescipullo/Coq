@@ -416,7 +416,7 @@ Qed.
 End Ejercicio9.
 
 
-Section Naturals.
+Section Ejercicio10.
 
 Variable nat : Set.
 Variable  O  : nat.
@@ -433,7 +433,6 @@ Axiom sumS   : forall n m :nat, (sum n (S m))=(S (sum n m)).
 Axiom prod0  : forall n :nat, (prod n O)=O.
 Axiom prodS  : forall n m :nat, (prod n (S m))=(sum n (prod n m)).
 
-Section Ejercicio10.
 
 Lemma L10_1: (sum (S O) (S O)) = (S (S O)).
 Proof.
@@ -502,28 +501,34 @@ Proof.
 (* Esta prueba seria bastante mas sencilla si tuviesemos un corolario
  * que demuestre que la suma es una operacion simetrica. *)
 intros n m sum_0.
-elim (allNat m); elim (allNat n); intros; split; try assumption.
-- rewrite H0 in sum_0.
-  rewrite sum0 in sum_0.
-  exact sum_0.
-- elim H0; intros.
-  rewrite <- H3 in sum_0.
-  rewrite sumS in sum_0.
-  elim (disc (sum n x)).
-  symmetry.
-  exact sum_0.
-- elim H0; intros.
-  rewrite <- H3 in sum_0.
-  rewrite sumS in sum_0.
-  elim (disc (sum n x)).
-  symmetry.
-  exact sum_0.
-- elim H0; intros.
-  rewrite <- H3 in sum_0.
-  rewrite sumS in sum_0.
-  elim (disc (sum n x)).
-  symmetry.
-  exact sum_0.
+elim (allNat m); elim (allNat n); intros; split; try assumption;
+try (rewrite H0 in sum_0;
+rewrite sum0 in sum_0;
+exact sum_0);
+try (elim H0; intros;
+rewrite <- H3 in sum_0;
+rewrite sumS in sum_0;
+elim (disc (sum n x));
+symmetry;
+exact sum_0).
+Qed.
+
+Lemma L10_5_orelse: forall m n: nat, sum m n = O -> m = O /\ n = O.  
+Proof.
+(* Esta prueba seria bastante mas sencilla si tuviesemos un corolario
+ * que demuestre que la suma es una operacion simetrica. *)
+intros n m sum_0.
+elim (allNat m); elim (allNat n); intros; split; try assumption;
+(rewrite H0 in sum_0;
+rewrite sum0 in sum_0;
+exact sum_0)
+|| (* or else, semanticamente similar a dos try anidados*)
+(elim H0; intros;
+rewrite <- H3 in sum_0;
+rewrite sumS in sum_0;
+elim (disc (sum n x));
+symmetry;
+exact sum_0).
 Qed.
 
 Lemma lemma_aux: forall n m: nat, ~(sum (S n) m = O).
@@ -570,23 +575,23 @@ Section Ejercicio11.
 
 Variable le : nat->nat->Prop.
 Axiom leinv: forall n m:nat, (le n m) -> n=O \/ (exists p:nat, (exists q:nat, n=(S p)/\ m=(S q) /\ (le p q))).
+(* En el lema de inversion se invierte la definicion inductiva. *)
 
 Lemma notle_s_o: forall n:nat, ~(le (S n) O).
 Proof.
 intros n H.
 elim (leinv (S n) O).
 - intro H0.
-  apply (disc n).
+  apply (disc nat O S n).
   symmetry.
   exact H0.
 - intro e0; elim e0; intros p e1.
   elim e1; intros q e2.
   elim e2; intros e3 e4.
   elim e4; intros e5 e6.
-  apply (disc q).
+  apply (disc nat O S q).
   exact e5.
 - exact H.
 Qed.
 
 End Ejercicio11.
-End Naturals.
