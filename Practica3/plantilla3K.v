@@ -343,13 +343,14 @@ Parameter emptyA : forall X : Set, Array X 0.
 Parameter addA : forall (X : Set) (n : nat), X -> Array X n -> Array X (S n).
 
 Parameter Matrix : Set -> nat -> Set.
-Parameter emptyM : forall (X : Set) (m:nat), Matrix (Array X m) 0.
-Parameter addM : forall (X : Set) (m n : nat), Array X m -> Matrix (Array X m) n -> Matrix (Array X m) (S n).
+Parameter emptyM : forall (X : Set) (m:nat), Matrix (Array X m) 0. (* permite crear todas las matrices de 0 columnas *)
+Parameter addM : forall (X : Set) (m n : nat), Array X m -> Matrix (Array X m) n -> Matrix (Array X m) (S n). (* crea matrices m X n *)
 
+(* Tomamos como cantidad de filas 3. Si la cantidad de filas que tiene una matriz escalonada es 
+mayor a la cantidad de columnas, existen filas nulas, lo que no aporta informacion *)
 Definition A1 := addA nat 2 1 (addA nat 1 0 (addA nat 0 0 (emptyA nat))). (*columna de longitud 3 con un 1 al inicio*)
-Definition A2 := addA nat 2 2 (addA nat 1 2 (addA nat 0 0 (emptyA nat))).
-Definition A3 := addA nat 2 3 (addA nat 1 3 (addA nat 0 3 (emptyA nat))).
-
+Definition A2 := addA nat 2 2 (addA nat 1 2 (addA nat 0 0 (emptyA nat))). (*columna de longitud 3 con dos 2 al inicio*)
+Definition A3 := addA nat 2 3 (addA nat 1 3 (addA nat 0 3 (emptyA nat))). (*columna de longitud 3 con tres 3 al inicio*)
 
 Definition M1 := addM nat 3 0 A1 (emptyM nat 3).  (* matriz de una columna *)
 Definition M2 := addM nat 3 1 A2 M1. (* matriz de dos columnas *) 
@@ -372,7 +373,7 @@ Parameter add      : forall n:nat, nat -> ArrayNat n -> ArrayNat (n + 1).*)
 
 Parameter addAB : forall n : nat, ArrayNat (Nat.pow 2 n) -> ABNat n -> ABNat (S n). (* A un árbol de altura n le paso como array un nuevo nivel *)
 
-Definition AB2 := addAB 1 (add 1 7 (add 0 7 empty)) (addAB 0 (add 0 2 empty) (emptyAB)).
+Definition AB2 := addAB 1 (add 1 7 (add 0 7 empty)) (addAB 0 (add 0 3 empty) (emptyAB)).
 Check AB2.
 
 (* Chequeemos como preferimos gralizar *)
@@ -393,6 +394,8 @@ Section Ejercicio12.
 
 Parameter  AVLNat : forall n : nat, Set.
 Parameter emptyAVL : AVLNat 0.
+(* No pienso en agregar un elemento al árbol, sino en contruir un árbol. Le paso la raiz,
+el árbol izq y el árbol der *)
 Parameter addAVL1 : forall n:nat, nat -> AVLNat n -> AVLNat (plus n 1) -> AVLNat (S (S n)).
 Parameter addAVL2 : forall n:nat, nat -> AVLNat n -> AVLNat n -> AVLNat (S n).
 Parameter addAVL3 : forall n:nat, nat -> AVLNat n -> AVLNat (minus n 1) -> AVLNat (S n).
