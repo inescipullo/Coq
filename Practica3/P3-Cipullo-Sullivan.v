@@ -105,17 +105,16 @@ Parameter emptyA : forall X : Set, Array X 0.
 Parameter addA : forall (X : Set) (n : nat), X -> Array X n -> Array X (S n).
 
 Parameter Matrix : Set -> nat -> Set.
-Parameter emptyM : forall (X : Set) (m:nat), Matrix (Array X m) 0. (* permite crear las matrices de 0 columnas y m filas *)
-Parameter addM : forall (X : Set) (m n : nat), Array X m -> Matrix (Array X m) n -> Matrix (Array X m) (S n). (* permite crear matrices m X (n+1) *)
+Parameter emptyM : forall (X : Set), Matrix X 0.
+Parameter addM : forall (X : Set) (n : nat), Array X (S n) -> Matrix X n -> Matrix X (S n).
 
-(* Tomamos como cantidad de filas 3 *)
-Definition A1 := addA nat 2 1 (addA nat 1 0 (addA nat 0 0 (emptyA nat))). (*columna de longitud 3 con un 1 al inicio*)
-Definition A2 := addA nat 2 2 (addA nat 1 2 (addA nat 0 0 (emptyA nat))). (*columna de longitud 3 con dos 2 al inicio*)
-Definition A3 := addA nat 2 3 (addA nat 1 3 (addA nat 0 3 (emptyA nat))). (*columna de longitud 3 con tres 3 al inicio*)
+Definition A1 := addA nat 0 1 (emptyA nat).
+Definition A2 := addA nat 1 2 (addA nat 0 2 (emptyA nat)).
+Definition A3 := addA nat 2 3 (addA nat 1 3 (addA nat 0 3 (emptyA nat))).
 
-Definition M1 := addM nat 3 0 A1 (emptyM nat 3).  (* matriz de una columna *)
-Definition M2 := addM nat 3 1 A2 M1. (* matriz de dos columnas *) 
-Definition M3 := addM nat 3 2 A3 M2. (* matriz de tres columnas *)
+Definition M1 := addM nat 0 A1 (emptyM nat).  (* matriz de una columna *)
+Definition M2 := addM nat 1 A2 M1. (* matriz de dos columnas *) 
+Definition M3 := addM nat 2 A3 M2. (* matriz de tres columnas *)
 
 Check M3.
 
