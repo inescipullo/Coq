@@ -48,13 +48,6 @@ Definition opK (A : Set) (B : Set) (x : A) (y : B) := x.
 
 Definition opS (A : Set) (B: Set) (C : Set) (f : A -> B -> C) (g : A -> B) (x : A) := (f x) (g x).
 
-Lemma e5je : forall A B : Set, opS A (B->A) A (opK A (B->A)) (opK A B)  = opI A.
-Proof.
-cbv delta.
-cbv beta.
-reflexivity.
-Qed.
-
 (* 5.2 *)
 (* Para formalizar el siguiente lema, determine los tipos ?1 ... ?8 adecuados*) 
 Lemma e52 : forall A B : Set, opS A (B->A) A (opK A (B->A)) (opK A B) = opI A.
@@ -84,7 +77,7 @@ Check (add 1 0 (add 0 0 empty): ArrayNat 2).
 Check (add 3 0 (add 2 1 (add 1 0 (add 0 1 empty))): ArrayNat 4).
 
 (* 8.3 *)
-Parameter Concat : forall n1: nat, forall n2 :nat, ArrayNat n1 -> ArrayNat n2 -> ArrayNat (plus n1 n2). 
+Parameter Concat : forall (n1 n2 : nat), ArrayNat n1 -> ArrayNat n2 -> ArrayNat (plus n1 n2). 
 
 (* 8.4 *)
 Parameter Zip : forall n: nat, ArrayNat n -> ArrayNat n -> (nat->nat->nat) -> ArrayNat n.
@@ -95,8 +88,8 @@ Check (ArrayNat: nat -> Set).
 (* 8.6 *)
 Parameter ArrayGen : Set -> nat -> Set.
 Parameter emptyGen : forall X: Set, ArrayGen X 0.
-Parameter addGen   : forall X: Set, forall n: nat, X -> ArrayGen X n -> ArrayGen X (n+1).
-Parameter ZipGen   : forall X: Set, forall n: nat, ArrayGen X n -> ArrayGen X n -> (nat->nat->nat) -> ArrayGen X n.
+Parameter addGen   : forall (X: Set) (n: nat), X -> ArrayGen X n -> ArrayGen X (n+1).
+Parameter ZipGen   : forall (X: Set) (n: nat), ArrayGen X n -> ArrayGen X n -> (nat->nat->nat) -> ArrayGen X n.
 
 (* 8.7 *)
 Parameter ArrayBool : forall n: nat, ArrayGen bool n.
@@ -112,11 +105,10 @@ Parameter emptyA : forall X : Set, Array X 0.
 Parameter addA : forall (X : Set) (n : nat), X -> Array X n -> Array X (S n).
 
 Parameter Matrix : Set -> nat -> Set.
-Parameter emptyM : forall (X : Set) (m:nat), Matrix (Array X m) 0. (* permite crear todas las matrices de 0 columnas *)
-Parameter addM : forall (X : Set) (m n : nat), Array X m -> Matrix (Array X m) n -> Matrix (Array X m) (S n). (* crea matrices m X n *)
+Parameter emptyM : forall (X : Set) (m:nat), Matrix (Array X m) 0. (* permite crear las matrices de 0 columnas y m filas *)
+Parameter addM : forall (X : Set) (m n : nat), Array X m -> Matrix (Array X m) n -> Matrix (Array X m) (S n). (* permite crear matrices m X (n+1) *)
 
-(* Tomamos como cantidad de filas 3. Si la cantidad de filas que tiene una matriz escalonada es 
-mayor a la cantidad de columnas, existen filas nulas, lo que no aporta informacion *)
+(* Tomamos como cantidad de filas 3 *)
 Definition A1 := addA nat 2 1 (addA nat 1 0 (addA nat 0 0 (emptyA nat))). (*columna de longitud 3 con un 1 al inicio*)
 Definition A2 := addA nat 2 2 (addA nat 1 2 (addA nat 0 0 (emptyA nat))). (*columna de longitud 3 con dos 2 al inicio*)
 Definition A3 := addA nat 2 3 (addA nat 1 3 (addA nat 0 3 (emptyA nat))). (*columna de longitud 3 con tres 3 al inicio*)
@@ -137,7 +129,7 @@ Parameter ABNat : forall n : nat, Set.
 
 Parameter emptyAB : ABNat 0.
 
-Parameter addAB : forall n : nat, ArrayNat (Nat.pow 2 n) -> ABNat n -> ABNat (S n). (* A un árbol de altura n le paso como array un nuevo nivel *)
+Parameter addAB : forall n : nat, ArrayNat (Nat.pow 2 n) -> ABNat n -> ABNat (S n). (* A un árbol de altura n le paso como array el nuevo nivel *)
 
 Definition AB2 := addAB 1 (add 1 7 (add 0 7 empty)) (addAB 0 (add 0 3 empty) (emptyAB)).
 Check AB2.
@@ -154,7 +146,7 @@ Section Ejercicio12.
 
 Parameter  AVLNat : forall n : nat, Set.
 Parameter emptyAVL : AVLNat 0.
-(* No pienso en agregar un elemento al árbol, sino en contruir un árbol. Le paso la raiz,
+(* No se piensa en agregar un elemento al árbol, sino en construir un árbol. Se pasa la raíz,
 el árbol izq y el árbol der *)
 Parameter addAVL1 : forall n:nat, nat -> AVLNat n -> AVLNat (plus n 1) -> AVLNat (S (S n)).
 Parameter addAVL2 : forall n:nat, nat -> AVLNat n -> AVLNat n -> AVLNat (S n).
