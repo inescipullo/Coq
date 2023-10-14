@@ -234,26 +234,103 @@ compute;
 reflexivity.
 Qed.
 
-Lemma asoc_and : forall b1 b2 b3: bool, And b1 (And b2 b3) = And (And b1 b2) b3.
 
-Lemma asoc_or : forall b1 b2 b3: bool, Or b1 (Or b2 b3) = Or (Or b1 b2) b3.
+End Ejercicio8.
 
-Lemma LAnd : forall a b : bool, And a b = true <-> a = true /\ b = true.
+Section Ej3.
+
+Fixpoint add (n m:nat) {struct n}: nat :=
+  match n with
+      0 => m
+    | S k => S (add k m)
+  end.
+
+Fixpoint prod (n m:nat) {struct n}: nat :=
+  match n with
+    0 => 0
+   | S 0 => m
+   | S x => add m (prod x m)
+  end.
+
+Fixpoint pot (n m:nat) {struct m}: nat :=
+  match m with
+    0 => S 0
+   | S k => prod n (pot n k)
+  end.
+
+Definition isZero :=
+  fun n:nat => match n with
+                  0 => true
+                 | S x => false
+  end.
+
+Fixpoint leBool (n m:nat) {struct n}: bool :=
+  match n, m with
+    0, 0 => false
+   | 0, S y => true
+   | S x, 0 => false
+   | S x, S y => leBool x y
+  end. 
+
+(*prod pot leBool*)
+
+
+End Ej3.
+
+Section Ejercicio11.
+
+Lemma L1 : forall (A : Set) (l : list A), append A l (nil A) = l.
 Proof.
-intros a b.
-unfold iff; split; intro h. 
-- destruct a; destruct b; simpl in h; split; try assumption; try reflexivity.
-- elim h; intros a_val b_val.
-  rewrite a_val; rewrite b_val.
-  compute.
+induction l.
+- simpl. reflexivity.
+- simpl. rewrite IHl. reflexivity.
+Qed.
+
+Lemma L2 : forall (A : Set) (l : list A) (a : A), ~(cons A a l) = nil A.
+Proof.
+intros.
+discriminate.
+Qed.
+
+Lemma L3 : forall (A : Set) (l m : list A) (a : A), 
+cons A a (append A l m) = append A (cons A a l) m.
+Proof.
+induction l.
+- intros. simpl. reflexivity.
+- intros. simpl. reflexivity.
+Qed.
+
+Lemma L4 : forall (A : Set) (l m : list A),
+length A (append A l m) = add (length A l) (length A m).
+Proof.
+induction l.
+- simpl. reflexivity.
+- intros. simpl. rewrite IHl. reflexivity.
+Qed.
+
+Lemma add1_eq_S : forall (x:nat), add x 1 = S x.
+Proof.
+intro x.
+induction x.
+- simpl. reflexivity.
+- simpl.
+  rewrite IHx.
   reflexivity.
 Qed.
 
-Lemma
+Lemma L5 : forall (A : Set) (l : list A), length A (reverse A l) = length A l.
+Proof.
+induction l.
+- simpl. reflexivity.
+- simpl. elim IHl. 
+  rewrite (L4 A (reverse A l) (cons A a (nil A))).
+  simpl. apply (add1_eq_S (length A (reverse A l))).
+Qed.
 
-3. LOr1 : forall a b : bool, Or a b = false <-> a = false /\ b = false
-4. LOr2 : forall a b : bool, Or a b = true <-> a = true \/ b = true
-5. LXor : forall a b : bool, Xor a b = true <-> a <> b
-6. LNot : forall b : bool, Not (Not b) = b 
+End Ejercicio11.
 
-End Ejercicio8.
+
+
+
+
+
