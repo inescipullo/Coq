@@ -436,6 +436,12 @@ Inductive ACom (A : Set) : nat -> Set :=
 (* 2 *)
 Definition leaves_ACom (n:nat) : nat := pot 2 n.
 
+(*
+Fixpoint leaves_ACom_ind (A:Set) (n:nat) (t:ACom A n) : nat :=
+  match t with
+   | singleton_ACom _ => 1
+*)
+
 (* 3 *)
 Axiom potO : forall n : nat, pot (S n) 0 = 1.
 Axiom potS : forall m: nat, pot 2 (S m) = sum (pot 2 m) (pot 2 m).
@@ -457,18 +463,60 @@ Inductive AB (A : Set) : nat -> Set :=
   empty_AB : AB A 0
 | add_AB : forall n m : nat, A -> AB A n -> AB A m -> AB A ((max n m) + 1).
 
-Axiom leBoolmax : forall x y : nat, if leBool x y then max x y = y else max x y = x.
-
 (* 2 *)
-Fixpoint camino (A : Set) (n : nat) (t : AB A n) : array A n :=
+Fixpoint camino (A : Set) (n : nat) (t : AB A n) : list A :=
   match t with
-   | empty_AB _ => empty_array A
-   | add_AB _ nl nr x l r => if leBool nl nr then add_array A nr x (camino A nr r) 
-                                             else add_array A nl x (camino A nl l)
+   | empty_AB _ => nil A
+   | add_AB _ nl nr x l r => if leBool nr nl then cons A x (camino A nl l) 
+                                             else cons A x (camino A nr r)
   end.
 
 (* 3 *)
-Lemma LengthCamino : forall (A : Set) (n : nat) (t : AB A n), length A (camino A n) = n.
+(*
+Fixpoint max_nat (n m : nat) : nat :=
+  match n,m with
+   | 0, 0 => 0
+   | 0, S m1 => S m1
+   | S n1, 0 => S n1
+   | S n1, S m1 => S (max_nat n1 m1)
+  end.
+
+Lemma leBoolmax : forall n m :nat, if leBool m n then max_nat n m = n else max_nat n m = m.
+Proof.
+intros.
+induction (max_nat n m) eqn:H1.
+- rewrite <- H1.
+  destruct (leBool m n) eqn:H2.
+
+
+induction n, m.
+- simpl. reflexivity.
+- simpl. reflexivity.
+- simpl. reflexivity.
+- simpl. 
+  destruct (leBool m n) eqn:H1.
+  simpl in IHn.
+- induction n, m.
+reflexivity.
+*)
+
+Axiom caso0 : forall m : nat, if leBool m 0 then max m 0 = 0 else max m 0 = m.
+
+
+
+Lemma LengthCamino : forall (A : Set) (n : nat) (t : AB A n), length A (camino A n t) = n.
+Proof.
+intros.
+induction t.
+- simpl; reflexivity.
+- simpl.
+  destruct (leBool m n) eqn:H1.
+  * simpl.
+    rewrite IHt1.
+    induction n.
+    + apply (caso0 m).
+
+
 
 End Ejercicio21.
 
