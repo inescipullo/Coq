@@ -109,7 +109,7 @@ Definition isZero :=
 
 Fixpoint leBool (n m:nat) {struct n}: bool :=
   match n, m with
-    0, 0 => false
+     0, 0 => false
    | 0, S y => true
    | S x, 0 => false
    | S x, S y => leBool x y
@@ -431,16 +431,16 @@ Section Ejercicio20.
 (* 1 *)
 Inductive ACom (A : Set) : nat -> Set :=
   singleton_ACom : array A 1 -> ACom A 0
-| add_ACom : forall n : nat, ACom A (n-1) -> array A (pot 2 n) -> ACom A n.
+| add_ACom : forall n : nat, array A (pot 2 n) -> ACom A (n-1) -> ACom A n.
 
 (* 2 *)
 Definition leaves_ACom (n:nat) : nat := pot 2 n.
 
-(*
-Fixpoint leaves_ACom_ind (A:Set) (n:nat) (t:ACom A n) : nat :=
+Fixpoint h (A:Set) (n:nat) (t:ACom A n) : nat :=
   match t with
-   | singleton_ACom _ => 1
-*)
+   | singleton_ACom _ _ => 1
+   | add_ACom _ m _ t1  => sum m (h A (m-1) t1)
+  end.
 
 (* 3 *)
 Axiom potO : forall n : nat, pot (S n) 0 = 1.
@@ -453,15 +453,38 @@ induction n.
 - apply potS.
 Qed.
 
+(*
+Lemma h_ACom : forall (A : Set) (n : nat) (t : ACom A n), h A n t = pot 2 n.
+Proof.
+intros.
+induction n. 
+- simpl.
+  destruct (h A 0 t).
+ reflexivity.
+- simpl.
+- reflexivity.
+  
+
+
+induction t; simpl.
+- reflexivity.
+- rewrite IHt.
+  induction n.
+  + simpl. reflexivity.
+  + simpl.
+    rewrite <- potS.
+*)
+
 End Ejercicio20.
 
 
 Section Ejercicio21.
 
 (* 1 *)
+
 Inductive AB (A : Set) : nat -> Set :=
   empty_AB : AB A 0
-| add_AB : forall n m : nat, A -> AB A n -> AB A m -> AB A ((max n m) + 1).
+| add_AB : forall n m : nat, A -> AB A n -> AB A m -> AB A (S (max n m)).
 
 (* 2 *)
 Fixpoint camino (A : Set) (n : nat) (t : AB A n) : list A :=
@@ -472,37 +495,34 @@ Fixpoint camino (A : Set) (n : nat) (t : AB A n) : list A :=
   end.
 
 (* 3 *)
-(*
-Fixpoint max_nat (n m : nat) : nat :=
-  match n,m with
-   | 0, 0 => 0
-   | 0, S m1 => S m1
-   | S n1, 0 => S n1
-   | S n1, S m1 => S (max_nat n1 m1)
-  end.
+Axiom maxLeBool1 : forall n m, leBool m n = true -> max n m = n.
+Axiom maxLeBool2 : forall n m, leBool m n = false -> max n m = m.
 
-Lemma leBoolmax : forall n m :nat, if leBool m n then max_nat n m = n else max_nat n m = m.
+Lemma LengthCamino : forall (A : Set) (n : nat) (t : AB A n), length A (camino A n t) = n.
 Proof.
 intros.
-induction (max_nat n m) eqn:H1.
-- rewrite <- H1.
-  destruct (leBool m n) eqn:H2.
+induction t.
+* simpl. reflexivity.
+* simpl. 
+  destruct (leBool m n) eqn:H.
+  ** rewrite maxLeBool1.
+     *** simpl.
+         rewrite IHt1.
+         reflexivity.
+     *** exact H.
+  ** rewrite maxLeBool2.
+     *** simpl.
+         rewrite IHt2.
+         reflexivity.
+     *** exact H.
+Qed.
 
 
-induction n, m.
-- simpl. reflexivity.
-- simpl. reflexivity.
-- simpl. reflexivity.
-- simpl. 
-  destruct (leBool m n) eqn:H1.
-  simpl in IHn.
-- induction n, m.
-reflexivity.
-*)
+(*
+Otra Forma
 
-Axiom caso0 : forall m : nat, if leBool m 0 then max m 0 = 0 else max m 0 = m.
-
-
+Axiom leBoolmax1 : forall n m : nat, leBool m n = true -> max n m = n.
+Axiom leBoolmax2 : forall n m : nat, leBool m n = false -> max n m = m.
 
 Lemma LengthCamino : forall (A : Set) (n : nat) (t : AB A n), length A (camino A n t) = n.
 Proof.
@@ -510,13 +530,21 @@ intros.
 induction t.
 - simpl; reflexivity.
 - simpl.
-  destruct (leBool m n) eqn:H1.
-  * simpl.
+  case_eq (leBool m n).
+  + intro.
+    simpl.
     rewrite IHt1.
-    induction n.
-    + apply (caso0 m).
-
-
+    rewrite (leBoolmax n m).
+    * reflexivity.
+    * exact H.
+  + intro.
+    simpl.
+    rewrite IHt2.
+    rewrite (leBoolmax2 n m).
+    * reflexivity.
+    * exact H.
+Qed.
+*)
 
 End Ejercicio21.
 
