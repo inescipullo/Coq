@@ -80,6 +80,47 @@ Definition is_nil (A: Set) (l: list A) : bool :=
 End Ejercicio2.
 
 
+Section Ejercicio3.
+
+Fixpoint sum (n m:nat) {struct n}: nat :=
+  match n with
+     0 => m
+   | S k => S (sum k m)
+  end.
+
+Fixpoint prod (n m:nat) {struct n}: nat :=
+  match n with
+    0 => 0
+   | S 0 => m
+   | S x => sum m (prod x m)
+  end.
+
+Fixpoint pot (n m:nat) {struct m}: nat :=
+  match m with
+    0 => S 0
+   | S k => prod n (pot n k)
+  end.
+
+Definition isZero :=
+  fun n:nat => match n with
+                  0 => true
+                 | S x => false
+  end.
+
+Fixpoint leBool (n m:nat) {struct n}: bool :=
+  match n, m with
+    0, 0 => false
+   | 0, S y => true
+   | S x, 0 => false
+   | S x, S y => leBool x y
+  end. 
+
+(*prod pot leBool*)
+
+
+End Ejercicio3.
+
+
 Section Ejercicio4.
 
 Fixpoint length (A: Set) (l: list A) {struct l} : nat :=
@@ -237,45 +278,52 @@ Qed.
 
 End Ejercicio8.
 
-Section Ej3.
 
-Fixpoint add (n m:nat) {struct n}: nat :=
-  match n with
-      0 => m
-    | S k => S (add k m)
-  end.
+Section Ejercicio9.
 
-Fixpoint prod (n m:nat) {struct n}: nat :=
-  match n with
-    0 => 0
-   | S 0 => m
-   | S x => add m (prod x m)
-  end.
+Lemma SumO: forall n: nat, sum n 0 = n /\ sum 0 n = n.
+Proof.
+induction n.
+- split; compute; reflexivity.
+- split; elim IHn; intros hi1 hi2; simpl.
+  * rewrite hi1.
+    reflexivity.
+  * reflexivity.
+Qed.
 
-Fixpoint pot (n m:nat) {struct m}: nat :=
-  match m with
-    0 => S 0
-   | S k => prod n (pot n k)
-  end.
+Lemma SumS: forall n m: nat, sum n (S m) = sum (S n) m.
+Proof.
+induction n.
+- intro x; simpl; reflexivity.
+- intro x.
+  simpl.
+  rewrite (IHn x).
+  simpl.
+  reflexivity.
+Qed.
 
-Definition isZero :=
-  fun n:nat => match n with
-                  0 => true
-                 | S x => false
-  end.
+Lemma SumAsoc: forall n m p : nat, sum n (sum m p) = sum (sum n m) p.
+Proof.
+intros x y z.
+induction x.
+- simpl; reflexivity.
+- simpl. elim IHx; reflexivity.
+Qed.
 
-Fixpoint leBool (n m:nat) {struct n}: bool :=
-  match n, m with
-    0, 0 => false
-   | 0, S y => true
-   | S x, 0 => false
-   | S x, S y => leBool x y
-  end. 
+Lemma SumConm: forall n m: nat, sum n m = sum m n.
+Proof.
+intros x y.
+induction x; induction y.
+- reflexivity.
+- simpl. elim IHy. simpl. reflexivity.
+- simpl. rewrite IHx. simpl. reflexivity.
+- simpl. rewrite IHx.
+  rewrite (SumS y x).
+  reflexivity.
+Qed.
 
-(*prod pot leBool*)
+End Ejercicio9.
 
-
-End Ej3.
 
 Section Ejercicio11.
 
@@ -301,14 +349,14 @@ induction l.
 Qed.
 
 Lemma L4 : forall (A : Set) (l m : list A),
-length A (append A l m) = add (length A l) (length A m).
+length A (append A l m) = sum (length A l) (length A m).
 Proof.
 induction l.
 - simpl. reflexivity.
 - intros. simpl. rewrite IHl. reflexivity.
 Qed.
 
-Lemma add1_eq_S : forall (x:nat), add x 1 = S x.
+Lemma add1_eq_S : forall (x:nat), sum x 1 = S x.
 Proof.
 intro x.
 induction x.
@@ -330,7 +378,98 @@ Qed.
 End Ejercicio11.
 
 
+Section Ejercicio12.
+
+Lemma L7 : forall (A B : Set) (l m : list A) (f : A -> B), map A B f (append A l m) = append B (map A B f l) (map A B f m).
+Proof.
+intros.
+induction l; simpl.
+- reflexivity.
+- elim IHl.
+  reflexivity.
+Qed.
+
+Lemma L8 : forall (A : Set) (l m : list A) (P : A -> bool), filter A P (append A l m) = append A (filter A P l) (filter A P m).
+Proof.
+intros.
+induction l.
+- simpl; reflexivity.
+- admit.
+Admitted.
+
+Lemma L9 : forall (A : Set) (l : list A) (P : A -> bool), filter A P (filter A P l) = filter A P l.
+Proof.
+intros.
+induction l.
+- simpl; reflexivity.
+- simpl.
+  destruct (P a).
+  * simpl.
+    rewrite IHl.
+    destruct (P a).
+    admit.
+    admit.
+  * rewrite IHl.
+    reflexivity.
+Admitted.
+
+Lemma L10 : forall (A : Set) (l m n : list A), append A l (append A m n) = append A (append A l m) n.
+Proof.
+intros.
+induction l; simpl.
+- reflexivity.
+- rewrite IHl.
+  reflexivity.
+Qed.
 
 
+End Ejercicio12.
+
+
+Section Ejercicio20.
+
+(* 1 *)
+Inductive ACom (A : Set) : nat -> Set :=
+  singleton_ACom : array A 1 -> ACom A 0
+| add_ACom : forall n : nat, ACom A (n-1) -> array A (pot 2 n) -> ACom A n.
+
+(* 2 *)
+Definition leaves_ACom (n:nat) : nat := pot 2 n.
+
+(* 3 *)
+Axiom potO : forall n : nat, pot (S n) 0 = 1.
+Axiom potS : forall m: nat, pot 2 (S m) = sum (pot 2 m) (pot 2 m).
+
+Lemma LeavesACom : forall (n : nat), leaves_ACom n = pot 2 n.
+Proof.
+induction n.
+- apply potO.
+- apply potS.
+Qed.
+
+End Ejercicio20.
+
+
+Section Ejercicio21.
+
+(* 1 *)
+Inductive AB (A : Set) : nat -> Set :=
+  empty_AB : AB A 0
+| add_AB : forall n m : nat, A -> AB A n -> AB A m -> AB A ((max n m) + 1).
+
+Axiom leBoolmax : forall x y : nat, if leBool x y then max x y = y else max x y = x.
+
+(* 2 *)
+Fixpoint camino (A : Set) (n : nat) (t : AB A n) : array A n :=
+  match t with
+   | empty_AB _ => empty_array A
+   | add_AB _ nl nr x l r => if leBool nl nr then add_array A nr x (camino A nr r) 
+                                             else add_array A nl x (camino A nl l)
+  end.
+
+(* 3 *)
+Lemma LengthCamino : forall (A : Set) (n : nat) (t : AB A n), length A (camino A n) = n.
+
+End Ejercicio21.
 
 
