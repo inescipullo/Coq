@@ -572,8 +572,32 @@ Fixpoint camino (A : Set) (n : nat) (t : AB A n) : list A :=
   end.
 
 (* 3 *)
-Axiom maxLeBool1 : forall n m, leBool m n = true -> max n m = n.
-Axiom maxLeBool2 : forall n m, leBool m n = false -> max n m = m.
+Lemma maxLeBool1 : forall n m, leBool m n = true -> max n m = n.
+Proof.
+induction n. intros.
+- simpl. destruct m.
+  -- reflexivity.
+  -- simpl in H. discriminate.
+- destruct m. 
+  -- intros. simpl. reflexivity.
+  -- intros.
+     simpl. rewrite IHn.
+        --- reflexivity.
+        --- simpl in H. exact H.
+Qed.
+
+Lemma maxLeBool2 : forall n m, leBool m n = false -> max n m = m.
+Proof.
+induction n. intros.
+- destruct m.
+  -- simpl. reflexivity.
+  -- simpl. reflexivity.
+- destruct m.
+  -- simpl. intros. discriminate.
+  -- simpl. intros. rewrite IHn.
+      --- reflexivity.
+      --- exact H.
+Qed.
 
 Lemma LengthCamino : forall (A : Set) (n : nat) (t : AB A n), length A (camino A n t) = n.
 Proof.
