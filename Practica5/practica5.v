@@ -544,6 +544,7 @@ apply (xNext m (update m v1 true) (update (update m v1 true) v2 false)).
     apply enott.
     rewrite <- (LookupUpdate m v1 true).
 
+    (* rewrite <- (LookupUpdate m v1 true) at 2. *)
     assert ((update m v1 true) = (update m v1 (lookup v1 (update m v1 true)))).
     rewrite LookupUpdate. reflexivity.
 
