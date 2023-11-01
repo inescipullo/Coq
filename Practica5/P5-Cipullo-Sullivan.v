@@ -1,171 +1,5 @@
-Section Ejercicio1.
-
-Inductive list (A:Set) : Set :=
-  nil : list A
-| cons : A -> list A -> list A.
-
-Fixpoint append (A: Set) (l1: list A) (l2: list A) {struct l1} : list A :=
-  match l1 with
-   | nil _ => l2
-   | cons _ h l1' => cons A h (append A l1' l2)
-  end.
-
-Inductive LE : nat -> nat -> Prop :=
- | Le_O : forall n : nat, LE 0 n
- | Le_S : forall n m : nat, LE n m -> LE (S n) (S m).
-
-Inductive Mem (A : Set) (a : A) : list A -> Prop :=
- | here : forall x : list A, Mem A a (cons A a x)
- | there : forall x : list A, Mem A a x -> forall b : A, Mem A a (cons A b x). 
-
-(* 1 *)
-Theorem not_sn_le_o: forall n:nat, ~ LE (S n) O.
-Proof.
-unfold not.
-intros.
-simple inversion H. (* no hace discriminate automaticamente *)
-- discriminate.
-- discriminate.
-Qed.
-
-(* 2 *)
-Theorem nil_empty: forall (A:Set) (a:A), ~ Mem A a (nil A).
-Proof.
-unfold not.
-intros.
-simple inversion H.
-- discriminate.
-- discriminate.
-Qed.
-
-(* 3 *)
-Theorem four_not_le_than_three: ~LE 4 3.
-Proof.
-unfold not. intros.
-inversion H.
-inversion H2.
-inversion H5.
-apply (not_sn_le_o 0).
-exact H8.
-Qed.
-
-(* 4 *)
-Theorem succ_not_le: forall n: nat, ~LE (S n) n.
-Proof.
-unfold not. intros.
-induction n.
-- apply (not_sn_le_o 0). exact H.
-- inversion H.
-  apply IHn.
-  exact H2.
-Qed.
-
-(* 5 *)
-Theorem transitividad_le: forall a b c: nat, LE a b -> LE b c -> LE a c.
-Proof.
-induction a.
-- intros.
-  constructor.
-- intros.
-  inversion H.
-  rewrite <- H3 in H0.
-  inversion H0.
-  constructor.
-  apply (IHa m m0); assumption.
-Qed.
-
-(* 6 *)
-Theorem ej_1_6: forall (A: Set) (a: A) (l1 l2: list A), Mem A a l1 -> Mem A a (append A l1 l2).
-Proof.
-induction l1.
-- simpl.
-  intros.
-  inversion H.
-- intros.
-  simpl.
-  inversion H.
-  * apply here.
-  * apply there.
-    apply IHl1.
-    exact H1.
-Qed.
-
-
-End Ejercicio1.
-
-Section Ejercicio2.
-
-Inductive bintree (A:Set) : Set :=
-  empty_bintree : bintree A
-| add_bintree : A -> bintree A -> bintree A -> bintree A.
-
-Inductive isomorfo (A: Set): bintree A -> bintree A -> Prop :=
-  | isomorfo_nil: isomorfo A (empty_bintree A) (empty_bintree A)
-  | isomorfo_bt: forall (a b:A) l1 r1 l2 r2,
-      isomorfo _ l1 l2 -> isomorfo _ r1 r2 ->
-        isomorfo _ (add_bintree _ a l1 r1) (add_bintree _ b l2 r2).
-
-Fixpoint inverse (A: Set) (t: bintree A) : bintree A :=
-  match t with
-   | empty_bintree _ => empty_bintree A
-   | add_bintree _ x l r => add_bintree A x (inverse A r) (inverse A l)
-  end.
-
-
-Theorem ej_2_1: forall (A: Set) (a: A) (l r: bintree A), ~(isomorfo A (empty_bintree A) (add_bintree A a l r)).
-Proof.
-unfold not.
-intros.
-inversion H.
-Qed.
-
-Theorem ej_2_2: forall (A: Set) (a1 a2: A) (l1 r1 l2 r2: bintree A), 
-isomorfo A (add_bintree A a1 l1 r1) (add_bintree A a2 l2 r2) -> isomorfo A l1 l2 /\ isomorfo A r1 r2.
-Proof.
-intros.
-inversion H.
-split; assumption.
-Qed.
-
-Theorem ej_2_3: forall (A: Set) (t1 t2 t3: bintree A), isomorfo A t1 t2 -> isomorfo A t2 t3 -> isomorfo A t1 t3.
-Proof.
-induction t1.
-- intros.
-  inversion H.
-  rewrite <- H2 in H0.
-  inversion H0.
-  constructor.
-- intros.
-  inversion H.
-  rewrite <- H3 in H0.
-  inversion H0.
-  constructor.
-  * apply (IHt1_1 l2 l3).
-    + exact H5.
-    + exact H11.
-  * apply (IHt1_2 r2 r3).
-    + exact H6.
-    + exact H12.
-Qed.
-
-Theorem ej_2_4: forall (A: Set) (t1 t2: bintree A), isomorfo A t1 t2 -> isomorfo A (inverse A t1) (inverse A t2). 
-Proof.
-induction t1.
-- intros.
-  inversion H.
-  simpl.
-  constructor.
-- intros.
-  inversion H.
-  simpl.
-  constructor.
-  * apply (IHt1_2 r2).
-    exact H5.
-  * apply (IHt1_1 l2).
-    exact H4.
-Qed.
-
-End Ejercicio2.
+(* Entrega Práctico 5 - CFPTT *)
+(* Alumnas: Cipullo, Inés - Sullivan, Katherine *)
 
 
 Section Ejercicio4.
@@ -213,6 +47,7 @@ End Ejercicio4.
 
 Section Ej5.
 
+(* 1 *)
 Definition Var := nat.
 
 Inductive Exp : Set :=
@@ -221,6 +56,8 @@ Inductive Exp : Set :=
   | Eand : Exp -> Exp -> Exp
   | Enot : Exp -> Exp.
 
+
+(* 2 *)
 Definition Valor := bool.
 
 Definition Memoria := Var -> Valor.
@@ -243,7 +80,7 @@ Inductive BEval : Exp -> Memoria -> Valor -> Prop :=
   | enotf: forall (m:Memoria) (e1:Exp),
             BEval e1 m false -> BEval (Enot e1) m true.
 
-
+(* 3 a *)
 Theorem exp_true : forall (m:Memoria), ~BEval (Ebool true) m false.
 Proof.
 unfold not.
@@ -251,7 +88,7 @@ intros.
 inversion H.
 Qed.
 
-
+(* 3 b *)
 Theorem new_and : forall (m:Memoria) (e1 e2:Exp) (v:Valor),
 BEval e1 m true -> BEval e2 m v -> BEval (Eand e1 e2) m v.
 Proof.
@@ -272,6 +109,7 @@ intros. destruct e2.
   -- apply eandr. exact H0.
 Qed.
 
+(* 3 c *)
 Theorem determinismo : forall (m:Memoria) (e:Exp) (v1 v2:Valor),
 BEval e m v1 -> BEval e m v2 -> v1=v2.
 Proof.
@@ -308,6 +146,7 @@ induction e; intros.
      --- reflexivity.
 Qed.
 
+(* 3 d *)
 Theorem no_e1: forall (m:Memoria) (e1 e2:Exp),
 BEval e1 m false -> BEval (Enot (Eand e1 e2)) m true.
 Proof.
@@ -317,6 +156,7 @@ constructor.
 exact H.
 Qed.
 
+(* 4 *)
 Fixpoint beval (e:Exp) (m:Memoria) {struct e}: Valor :=
   match e with
    | Evar v0 => lookup v0 m
@@ -325,6 +165,7 @@ Fixpoint beval (e:Exp) (m:Memoria) {struct e}: Valor :=
    | Enot e1 => if beval e1 m then false else true
   end.
 
+(* 5 *)
 Theorem equiv : forall (e: Exp) (m:Memoria),
 BEval e m (beval e m).
 Proof.
