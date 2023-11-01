@@ -437,7 +437,7 @@ Inductive Execute: Instr -> Memoria -> Memoria -> Prop :=
                    BEval e m false -> Execute (WhileDo e p) m m
    | xRepeat0 : forall (m: Memoria) (p: Instr), Execute (Repeat 0 p) m m
    | xRepeatS : forall (m1 m2 m3: Memoria) (n: nat) (p: Instr),
-                Execute p m1 m2 -> Execute (Repeat n p) m2 m3 -> Execute (Repeat (n+1) p) m1 m3
+                Execute p m1 m2 -> Execute (Repeat n p) m2 m3 -> Execute (Repeat (S n) p) m1 m3
    | xBeginEnd : forall (m m1: Memoria) (ps: LInstr),
                  ExecuteL ps m m1 -> Execute (BeginEnd ps) m m1
 with ExecuteL : LInstr -> Memoria -> Memoria -> Prop :=
@@ -489,6 +489,13 @@ inversion H6.
   exact H12.
 Qed.
 
+Lemma mas1 : forall n:nat, n+1 = S n.
+Proof.
+induction n.
+- simpl. reflexivity.
+- simpl. rewrite IHn. reflexivity.
+Qed.
+
 (* 5 *)
 Lemma ExecuteRepeat: forall (n: nat) (p: Instr) (m1 m2: Memoria),
 Execute (BeginEnd (p; (Repeat n p); Empty)) m1 m2 -> Execute (Repeat (n+1) p) m1 m2.
@@ -499,30 +506,27 @@ inversion H1.
 inversion H9.
 inversion H15.
 rewrite H18 in H12.
+rewrite (mas1 n).
 apply (xRepeatS m1 m4 m2 n p).
 - exact H6.
 - exact H12.
 Qed.
 
 (* 6 *)
-(*
-Lemma ExecuteRepeat2: forall (n1 n2 : nat) (p: Instr) (m1 m2 m3: Memoria),
-Execute (Repeat n1 p) m1 m2 -> Execute (Repeat n2 p) m2 m3 -> Execute (Repeat (n1+n2) p) m1 m3.
+
+Lemma ExecuteRepeat2: forall (n1 n2 : nat) (p: Instr) (ma mb mc: Memoria),
+Execute (Repeat n1 p) ma mb -> Execute (Repeat n2 p) mb mc -> Execute (Repeat (n1+n2) p) ma mc.
 Proof.
 induction n1; intros; simpl.
-- inversion H in H0.
-  + exact H0.
-  + induction n2.
-    
-
- inversion H0.
-    * rewrite <- H10.
-      exact H.
-    * apply (xRepeatS m1 m7 m3).
-      ** exact H3.
-      **  
 - inversion H.
-*)
+  exact H0.
+- inversion H.
+  apply (xRepeatS ma m2 mc).
+    -- exact H3.
+    -- apply (IHn1 n2 p m2 mb mc).
+       --- exact H6.
+       --- exact H0.
+Qed.
 
 (* 7 *)
 (* BeginEnd (Assign v1 (Ebool true); Assign v2 (Enot (Evar v1)); Empty) *)
