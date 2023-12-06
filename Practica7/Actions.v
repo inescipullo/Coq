@@ -89,12 +89,60 @@ the processor must be in supervisor mode*)
   Definition inyective {A B : Set} (pmap : A ⇸ B) :=
     forall x y, pmap x = pmap y -> x = y.
 
-  Definition valid_state_v (s : State) : Prop :=
-  ...
+(* paged_owned_by ((memory s) ((hypervisor s) (active_os s) phyadd)) = (active_os s) *)
+  Definition valid_state_v_aux (s : State) : Prop :=
+    forall phyadd : padd, 
+      match (hypervisor s) (active_os s) with
+        | Some map => 
+            match map phyadd with
+              | Some mchadd => 
+                  match (memory s) mchadd with
+                     | Some page => 
+                         match page_owned_by page with
+                            | Os osid => osid = (active_os s)
+                            | Hyp => False
+                            | No_Owner => False
+                         end
+                     | _ => False
+                  end
+              | _ => False
+            end
+        | _ => False
+      end.
 
+(*the hypervisor maps an OS physical address to a machine address owned by
+that same OS. This mapping is also injective*)
+  Definition valid_state_v (s : State) : Prop :=
+  match (hypervisor s) (active_os s) with
+    | Some map => inyective map /\ valid_state_v_aux s
+    | _ => False
+  end.
+
+
+(*  all page tables of an OS o
+map accessible virtual addresses to pages owned by o and not accessible ones to
+pages owned by the hypervisor *)
   Definition valid_state_vi (s : State) : Prop :=
-  ...  
-  
+  forall mchadd : madd, 
+   match (memory s) mchadd with
+     | Some page =>
+        match page_content page with
+          | PT pgtable => 
+              forall viradd : vadd, 
+               match pgtable viradd with
+                | Some pageok => 
+                    (ctxt_vadd_accessible ctxt) viradd = true -> 
+                        page_owned_by page = Os (active_os s)
+                    /\
+                    (ctxt_vadd_accessible ctxt) viradd = false ->
+                        page_owned_by page = Hyp
+               | _ => True
+              end
+          | _ => True
+        end
+     | _ => True (* si no hay match quiero que sea vdd *)
+    end.
+
   Definition valid_state (s : State) : Prop :=
     valid_state_iii s /\ valid_state_v s /\ valid_state_vi s.
   
