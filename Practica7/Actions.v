@@ -2,7 +2,8 @@
  * Este archivo especifica las acciones Como transformadores de estado.
  * LAS DEFINICIONES DADAS PUEDEN SER USADAS DIRECTAMENTE O CAMBIADAS.
  ******************************************************************)
-Load "/home/administrador/Descargas/tpcoq/State".
+(* Load "/home/administrador/Descargas/tpcoq/State". *)
+Load "/Users/inescipullo/Documents_/Coq/Practica7/State".
 
 Parameter ctxt : context.
 
@@ -89,32 +90,108 @@ the processor must be in supervisor mode*)
   Definition inyective {A B : Set} (pmap : A ⇸ B) :=
     forall x y, pmap x = pmap y -> x = y.
 
-  Definition valid_state_v (s : State) : Prop :=
-  ...
+(* paged_owned_by ((memory s) ((hypervisor s) (active_os s) phyadd)) = (active_os s) *)
+  Definition valid_state_v_aux (s : State) : Prop :=
+    forall phyadd : padd, 
+      match (hypervisor s) (active_os s) with
+        | Some map => 
+            match map phyadd with
+              | Some mchadd => 
+                  match (memory s) mchadd with
+                     | Some page => 
+                         match page_owned_by page with
+                            | Os osid => osid = (active_os s)
+                            | Hyp => False
+                            | No_Owner => False
+                         end
+                     | _ => False
+                  end
+              | _ => False
+            end
+        | _ => False
+      end.
 
+(*the hypervisor maps an OS physical address to a machine address owned by
+that same OS. This mapping is also injective*)
+  Definition valid_state_v (s : State) : Prop :=
+  match (hypervisor s) (active_os s) with
+    | Some map => inyective map /\ valid_state_v_aux s
+    | _ => False
+  end.
+
+
+(*  all page tables of an OS o
+map accessible virtual addresses to pages owned by o and not accessible ones to
+pages owned by the hypervisor *)
   Definition valid_state_vi (s : State) : Prop :=
-  ...  
-  
+  forall mchadd : madd, 
+   match (memory s) mchadd with
+     | Some page =>
+        match page_content page with
+          | PT pgtable => 
+              forall viradd : vadd, 
+               match pgtable viradd with
+                | Some pageok => 
+                    (ctxt_vadd_accessible ctxt) viradd = true -> 
+                        page_owned_by page = Os (active_os s)
+                    /\
+                    (ctxt_vadd_accessible ctxt) viradd = false ->
+                        page_owned_by page = Hyp
+               | _ => True
+              end
+          | _ => True
+        end
+     | _ => True (* si no hay match quiero que sea vdd *)
+    end.
+
   Definition valid_state (s : State) : Prop :=
     valid_state_iii s /\ valid_state_v s /\ valid_state_vi s.
   
   Inductive one_step : State -> Action -> State -> Prop :=
-  ...
+  | step : forall (s s': State) (a: Action), 
+      valid_state(s) -> Pre s a -> Post s a s' -> one_step s a s'.
  
   Notation "a ⇒ s ↪ s'" := (one_step s a s') (at level 50).
 
-
+(*
   Theorem one_step_preserves_prop_iii : forall (s s' : State) (a : Action),
       a ⇒ s ↪ s' -> valid_state_iii s'.
   Proof.
-  ...
-  Qed. 
+  intros.
+  destruct H.
+  induction a.
+  - simpl in H1.
+    rewrite H1 in H.
+    induction H.
+    exact H.
+  - unfold valid_state_iii.
+    admit.
+  - simpl in H1.
+    elim H1; intros;
+    unfold valid_state_iii;
+    unfold differ_in_state in H2.
+    + elim H2; intros.
+      exact H3.
+      unfold trusted_os.
+      
+      admit.
+    + elim H2; intros.
+      
 
 
-  Theorem read_isolation : forall (s s' : State) (va : vadd),
-  ...  
+ simpl in H0.
+  induction a; induction H.
+  induction H.
+  
+
+  Qed.
+*)
+
+  Theorem read_isolation : forall (s s' : State) (va : vadd), read va ⇒ s ↪ s -> 
+  exists ma: madd, va_mapped_to_ma s va ma /\ exists pg: page, Some pg = (memory s) ma /\ (page_owned_by pg) = Os (active_os s).
   Proof.
-  ...
+  intros.
+  destruct H.
   Qed.
 
 End Actions.
