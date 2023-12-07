@@ -83,7 +83,7 @@ Definition differ_in_state (s s': State) (em : exec_mode) (act : os_activity) :=
  or a trusted OS is running 
 the processor must be in supervisor mode*)
   Definition valid_state_iii (s : State) : Prop :=  
-  ((aos_activity s) = waiting) \/ 
+  ((aos_activity s) = waiting) \/
     ((aos_activity s) = running -> trusted_os ctxt s) 
   -> (aos_exec_mode s) = svc.
   
@@ -131,13 +131,17 @@ pages owned by the hypervisor *)
           | PT pgtable => 
               forall viradd : vadd, 
                match pgtable viradd with
-                | Some pageok => 
-                    (ctxt_vadd_accessible ctxt) viradd = true -> 
-                        page_owned_by page = Os (active_os s)
-                    /\
-                    (ctxt_vadd_accessible ctxt) viradd = false ->
-                        page_owned_by page = Hyp
-               | _ => True
+                | Some maddok => 
+                    match (memory s) maddok with
+                     | Some pageok => 
+                              (ctxt_vadd_accessible ctxt) viradd = true -> 
+                                page_owned_by pageok = Os (active_os s)
+                              /\
+                              (ctxt_vadd_accessible ctxt) viradd = false ->
+                                page_owned_by pageok = Hyp
+                     | _ => True
+                    end
+                | _ => True
               end
           | _ => True
         end
@@ -146,14 +150,14 @@ pages owned by the hypervisor *)
 
   Definition valid_state (s : State) : Prop :=
     valid_state_iii s /\ valid_state_v s /\ valid_state_vi s.
-  
+
   Inductive one_step : State -> Action -> State -> Prop :=
   | step : forall (s s': State) (a: Action), 
       valid_state(s) -> Pre s a -> Post s a s' -> one_step s a s'.
- 
+
   Notation "a ⇒ s ↪ s'" := (one_step s a s') (at level 50).
 
-(*
+
   Theorem one_step_preserves_prop_iii : forall (s s' : State) (a : Action),
       a ⇒ s ↪ s' -> valid_state_iii s'.
   Proof.
@@ -162,18 +166,44 @@ pages owned by the hypervisor *)
   induction a.
   - simpl in H1.
     rewrite H1 in H.
-    induction H.
-    exact H.
+    unfold valid_state in H.
+    elim H. intros.
+    exact H2.
   - unfold valid_state_iii.
+    intros.
+    destruct H1.
+    unfold Pre in H0.
     admit.
-  - simpl in H1.
-    elim H1; intros;
-    unfold valid_state_iii;
-    unfold differ_in_state in H2.
+  - case_eq (aos_activity s); intros.
+    unfold valid_state in H. elim H. intros.
+    unfold valid_state_iii in H3.
+    + simpl in H1.
+      unfold valid_state_iii. intros.
+      elim H3.
+        -- intros.
+      admit. (*
+      elim H1.
+      * unfold valid_state_iii. intros.
+        unfold valid_state in H. elim H. intros.
+        unfold valid_state_iii in H5.
+        unfold differ_in_state in H3.
+        elim H5.
+      *)
+    + unfold valid_state in H. elim H. intros.
+      unfold valid_state_iii in H3.
+
+
+
+    elim H1; intros.
+    + unfold valid_state_iii.
+      intros.
+      unfold differ_in_state in H2.
+      elim H2. intros.
     + elim H2; intros.
       exact H3.
       unfold trusted_os.
       
+  unfold valid_state_iii.
       admit.
     + elim H2; intros.
       
@@ -185,7 +215,7 @@ pages owned by the hypervisor *)
   
 
   Qed.
-*)
+
 
   Theorem read_isolation : forall (s s' : State) (va : vadd), read va ⇒ s ↪ s -> 
   exists ma: madd, va_mapped_to_ma s va ma /\ exists pg: page, Some pg = (memory s) ma /\ (page_owned_by pg) = Os (active_os s).
@@ -195,3 +225,4 @@ pages owned by the hypervisor *)
   Qed.
 
 End Actions.
+
