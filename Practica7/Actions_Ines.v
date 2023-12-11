@@ -260,4 +260,3 @@ Definition Prop5 (s : State) : Prop :=
 
 
 End Actions.
-
