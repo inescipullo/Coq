@@ -120,7 +120,8 @@ Definition valid_state_v (s : State) : Prop :=
       (hypervisor s) (active_os s) = Some pm
       /\ pm pa = Some ma
       /\ memory s ma = Some pg
-      /\ page_owned_by pg = Os (active_os s).
+      /\ page_owned_by pg = Os (active_os s)
+      /\ inyective pm.
 
 (*  all page tables of an OS o
 map accessible virtual addresses to pages owned by o and not accessible ones to
@@ -236,17 +237,17 @@ Definition valid_state_vi (s : State) : Prop :=
             elim H0. intros. elim H15. intros.
             unfold valid_state_v in H16.
             apply (H16 x p).
-            ---- destruct (oss s (active_os s)) eqn:chau.
+            ---- destruct (oss s (active_os s)) eqn:hay_os.
                  ----- exact (curr_page o).
                  ----- unfold va_mapped_to_ma in H12.
                        destruct (oss s (active_os s)).
                        ------ discriminate.
                        ------ contradiction.
-            ---- destruct (hypervisor s (active_os s)) eqn:hola.
+            ---- destruct (hypervisor s (active_os s)) eqn:hay_map.
                  ----- exact p0.
                  ----- unfold va_mapped_to_ma in H12.
                        destruct (oss s (active_os s)).
-                       ------ destruct (hypervisor s (active_os s)) eqn:hola1.
+                       ------ destruct (hypervisor s (active_os s)) eqn:hay_map2.
                               * discriminate.
                               * contradiction.
                        ------ contradiction.
