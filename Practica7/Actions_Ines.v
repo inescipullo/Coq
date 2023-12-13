@@ -143,7 +143,7 @@ pages owned by the hypervisor *)
 *)
 
 Definition Prop5 (s : State) : Prop :=
-  forall (pa : padd) (pm : padd -> option madd) (ma : madd) (pg : page),
+  forall (ma : madd) (pg : page) (pa : padd) (pm : padd -> option madd),
       (hypervisor s) (active_os s) = Some pm
       /\ pm pa = Some ma
       /\ memory s ma = Some pg
@@ -236,27 +236,39 @@ Definition valid_state (s : State) : Prop :=
   inversion H.
   unfold valid_state in H0. elim H0. intros. elim H7. intros.
   inversion H2.
+  rewrite <- H10.
   unfold Pre in H1.
   elim H1. intros. elim H12. intros. elim H14. intros. elim H15. intros.
   exists x.
   split.
-  - rewrite <- H10.
-    elim H16. intros.
+  - elim H16. intros.
     exact H17.
   - destruct (memory s x).
     + exists p.
       rewrite H10 in H8.
+      split.
+      * reflexivity.
+      * unfold valid_state in H0.
+        elim H0. intros. elim H18. intros.
+        unfold Prop5 in H19.
+        apply (H19 x p).
+        -- destruct (oss s (active_os s)) eqn:hay_os.
+           --- exact (curr_page o).
+           --- unfold va_mapped_to_ma in H12.
+               destruct (oss s (active_os s)).
+               ---- discriminate.
+               ---- contradiction.
+            ---- destruct (hypervisor s (active_os s)) eqn:hay_map.
+                 ----- exact p0.
+                 ----- unfold va_mapped_to_ma in H12.
+                       destruct (oss s (active_os s)).
+                       ------ destruct (hypervisor s (active_os s)) eqn:hay_map2.
+                              * discriminate.
+                              * contradiction.
+                       ------ contradiction.
       elim (H8 (curr_page ) (hypervisor_map (active_os s')) x p).
     + contradiction H15.
   Qed.
-
-Definition Prop5 (s : State) : Prop :=
-  forall (pa : padd) (pm : padd -> option madd) (ma : madd) (pg : page),
-      (hypervisor s) (active_os s) = Some pm
-      /\ pm pa = Some ma
-      /\ memory s ma = Some pg
-      /\ page_owned_by pg = Os (active_os s)
-      /\ inyective pm.
 
 
 End Actions.

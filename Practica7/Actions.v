@@ -2,8 +2,8 @@
  * Este archivo especifica las acciones Como transformadores de estado.
  * LAS DEFINICIONES DADAS PUEDEN SER USADAS DIRECTAMENTE O CAMBIADAS.
  ******************************************************************)
-Load "/home/administrador/Documentos/Coq/Practica7/State".
-(* Load "/Users/inescipullo/Documents_/Coq/Practica7/State". *)
+(* Load "/home/administrador/Documentos/Coq/Practica7/State". *)
+Load "/Users/inescipullo/Documents_/Coq/Practica7/State".
 
 Parameter ctxt : context.
 
@@ -18,103 +18,73 @@ Section Actions.
   Definition Pre (s : State) (a : Action) : Prop :=
     match a with
     | read va => (ctxt_vadd_accessible ctxt) va = true 
-                  /\ (aos_activity s) = running 
-                   /\ exists (ma : madd), 
-                      (va_mapped_to_ma s va ma 
-                        /\ match memory s ma with
-                            | Some page => is_RW (page_content page)
-                            | _ => False
-                           end)
+                 /\ (aos_activity s) = running
+                 /\ exists (ma : madd),
+                      va_mapped_to_ma s va ma
+                      /\ match memory s ma with
+                          | Some page => is_RW (page_content page)
+                          | _ => False
+                         end
     | write va val => (ctxt_vadd_accessible ctxt) va = true 
-                        /\ (aos_activity s) = running 
-                         /\ exists (ma : madd), 
-                            (va_mapped_to_ma s va ma 
-                              /\ match memory s ma with
-                                  | Some page => is_RW (page_content page)
-                                  | _ => False
-                                 end)
-    | chmod => (aos_activity s) = waiting -> 
-                  match ((oss s) (active_os s)) with 
-                  | Some os => hcall os = None
-                  | _ => False
+                      /\ (aos_activity s) = running
+                      /\ exists (ma : madd),
+                           va_mapped_to_ma s va ma
+                           /\ match memory s ma with
+                               | Some page => is_RW (page_content page)
+                               | _ => False
+                              end
+    | chmod => (aos_activity s) = waiting ->
+                  match ((oss s) (active_os s)) with
+                   | Some os => hcall os = None
+                   | _ => False
                   end
     end.
 
 Definition differ_in_state (s s': State) (em : exec_mode) (act : os_activity) :=
-(aos_exec_mode s') = em 
-/\ (aos_activity s') = act
-/\ (active_os s) = (active_os s')
-/\ (oss s) = (oss s')
-/\ (hypervisor s) = (hypervisor s')
-/\ (memory s) = (memory s').
+   aos_exec_mode s' = em
+/\ aos_activity s' = act
+/\ active_os s = active_os s'
+/\ oss s = oss s'
+/\ hypervisor s = hypervisor s'
+/\ memory s = memory s'.
 
 Definition differ_at_most_memory (s s': State) (ma: madd) : Prop :=
-  aos_activity s = aos_activity s'
+   aos_activity s = aos_activity s'
 /\ aos_exec_mode s = aos_exec_mode s'
-/\  active_os s = active_os s'
+/\ active_os s = active_os s'
 /\ oss s = oss s'
 /\ hypervisor s = hypervisor s'
 /\ forall (m: madd), m <> ma -> (memory s) m = (memory s') m.
-  
+
 
   (* Action postconditions *)
   Definition Post (s : State) (a : Action) (s' : State) : Prop :=
     match a with
     | read va => s = s'
-    | write va val => exists (ma : madd), (va_mapped_to_ma s va ma 
-                                          /\ (memory s') = 
+    | write va val => exists (ma : madd), va_mapped_to_ma s va ma 
+                                          /\ (memory s') =
                                               update (memory s) ma
-                                                 (mk_page (RW (Some val)) 
-                                                        (Os (active_os s)))
-                                           ) 
+                                                 (mk_page (RW (Some val))
+                                                   (Os (active_os s)))
                                           /\ differ_at_most_memory s s' ma
-    | chmod => (trusted_os ctxt s /\ 
-                 differ_in_state s s' svc running)
-               \/ 
-               (~(trusted_os ctxt s) /\ 
-                differ_in_state s s' usr running)
+    | chmod => (trusted_os ctxt s /\ differ_in_state s s' svc running)
+               \/
+               (~(trusted_os ctxt s) /\ differ_in_state s s' usr running)
     end.
 
 (* if the hypervisor (hypervisor running si activity es waiting)
  or a trusted OS is running 
 the processor must be in supervisor mode*)
-  Definition valid_state_iii (s : State) : Prop :=  
-  ((aos_activity s) = waiting) \/
-    ((aos_activity s) = running /\ trusted_os ctxt s) 
-  -> (aos_exec_mode s) = svc.
-  
+
+  Definition valid_state_iii (s : State) : Prop :=
+  (aos_activity s = waiting) \/ (aos_activity s = running /\ trusted_os ctxt s)
+    -> (aos_exec_mode s) = svc.
+
   Definition inyective {A B : Set} (pmap : A ⇸ B) :=
     forall x y, pmap x = pmap y -> x = y.
 
-(* paged_owned_by ((memory s) ((hypervisor s) (active_os s) phyadd)) = (active_os s) *)
-  Definition valid_state_v_aux (s : State) : Prop :=
-    forall phyadd : padd, 
-      match (hypervisor s) (active_os s) with
-        | Some map => 
-            match map phyadd with
-              | Some mchadd => 
-                  match (memory s) mchadd with
-                     | Some page => 
-                         match page_owned_by page with
-                            | Os osid => osid = (active_os s)
-                            | Hyp => False
-                            | No_Owner => False
-                         end
-                     | _ => False
-                  end
-              | _ => False
-            end
-        | _ => False
-      end.
-
 (*the hypervisor maps an OS physical address to a machine address owned by
 that same OS. This mapping is also injective*)
-(*   Definition valid_state_v (s : State) : Prop :=
-  match (hypervisor s) (active_os s) with
-    | Some map => inyective map /\ valid_state_v_aux s
-    | _ => False
-  end. *)
-
 Definition valid_state_v (s : State) : Prop :=
   forall (ma : madd) (pg : page) (pa : padd) (pm : padd -> option madd),
       (hypervisor s) (active_os s) = Some pm
@@ -126,27 +96,6 @@ Definition valid_state_v (s : State) : Prop :=
 (*  all page tables of an OS o
 map accessible virtual addresses to pages owned by o and not accessible ones to
 pages owned by the hypervisor *)
-(*   Definition valid_state_vi (s : State) : Prop :=
-  forall (p: page),
-    match (page_content p), (page_owned_by p) with
-      | PT pt, Os o => 
-        forall viradd : vadd, 
-          match pt viradd with
-           | Some ma => 
-               match (memory s) ma with
-                  | Some pageok => 
-                                (ctxt_vadd_accessible ctxt) viradd = true -> 
-                                  page_owned_by pageok = Os o
-                                /\
-                                (ctxt_vadd_accessible ctxt) viradd = false ->
-                                  page_owned_by pageok = Hyp
-                   | _ => False
-               end
-           | _ => True
-          end
-      | _, _ => True
-     end. *)
-
 Definition valid_state_vi (s : State) : Prop :=
   forall (pg pg' : page) (vtm : vadd -> option madd) (va : vadd) (ma : madd) (o : os_ident),
     page_content pg = PT vtm 
@@ -187,15 +136,16 @@ Definition valid_state_vi (s : State) : Prop :=
     elim H. intros.
     unfold valid_state_iii. intros. (*Dejamos las hipótesis como nos interesan*)
     elim H17. (* Vemos caso waiting or running *)
-      -- rewrite <- H9. rewrite H4. discriminate. (*Sabemos que esta running*)
+      -- rewrite <- H11. rewrite H4. discriminate. (*Sabemos que esta running*)
       -- intros. elim H18. intros.
-         rewrite <- H11. (*Probamos que vale viendo que vale exec mode s = svc*)
+         rewrite <- H13. (*Probamos que vale viendo que vale exec mode s = svc*)
          apply H15. (*y para probar eso usamos que para s' vale trusted_os*)
          right.
          split.
           --- exact H4.
           --- unfold trusted_os.
-              rewrite H13.
+              elim H14. intros.
+              rewrite H21.
               exact H20.
   - inversion H1; elim H2; intros; unfold differ_in_state in H4;
       elim H4; intros. (*Analizamos por casos si es trusted os s o no*)
@@ -232,25 +182,25 @@ Definition valid_state_vi (s : State) : Prop :=
   - destruct (memory s x).
     -- exists p.
        split.
-        --- reflexivity.
-        --- unfold valid_state in H0.
-            elim H0. intros. elim H15. intros.
-            unfold valid_state_v in H16.
-            apply (H16 x p).
-            ---- destruct (oss s (active_os s)) eqn:hay_os.
-                 ----- exact (curr_page o).
-                 ----- unfold va_mapped_to_ma in H12.
-                       destruct (oss s (active_os s)).
-                       ------ discriminate.
-                       ------ contradiction.
-            ---- destruct (hypervisor s (active_os s)) eqn:hay_map.
-                 ----- exact p0.
-                 ----- unfold va_mapped_to_ma in H12.
-                       destruct (oss s (active_os s)).
-                       ------ destruct (hypervisor s (active_os s)) eqn:hay_map2.
-                              * discriminate.
-                              * contradiction.
-                       ------ contradiction.
+       --- reflexivity.
+       --- unfold valid_state in H0.
+           elim H0. intros. elim H15. intros.
+           unfold valid_state_v in H16.
+           apply (H16 x p).
+           ---- destruct (oss s (active_os s)) eqn:hay_os.
+                ----- exact (curr_page o).
+                ----- unfold va_mapped_to_ma in H12.
+                      destruct (oss s (active_os s)).
+                      ------ discriminate.
+                      ------ contradiction.
+           ---- destruct (hypervisor s (active_os s)) eqn:hay_map.
+                ----- exact p0.
+                ----- unfold va_mapped_to_ma in H12.
+                      destruct (oss s (active_os s)).
+                      ------ destruct (hypervisor s (active_os s)) eqn:hay_map2.
+                             * discriminate.
+                             * contradiction.
+                      ------ contradiction.
     -- contradiction.
   Qed.
 
