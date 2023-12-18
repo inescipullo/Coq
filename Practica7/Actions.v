@@ -2,8 +2,8 @@
  * Este archivo especifica las acciones Como transformadores de estado.
  * LAS DEFINICIONES DADAS PUEDEN SER USADAS DIRECTAMENTE O CAMBIADAS.
  ******************************************************************)
-(* Load "/home/administrador/Documentos/Coq/Practica7/State". *)
-Load "/Users/inescipullo/Documents_/Coq/Practica7/State".
+Load "/home/administrador/Documentos/Coq/Practica7/State".
+(* Load "/Users/inescipullo/Documents_/Coq/Practica7/State". *)
 
 Parameter ctxt : context.
 
@@ -105,6 +105,28 @@ Definition valid_state_vi (s : State) : Prop :=
     /\ (ctxt_vadd_accessible ctxt va = true -> page_owned_by pg' = Os o)
     /\ (ctxt_vadd_accessible ctxt va = false -> page_owned_by pg' = Hyp).
 
+(*
+Es algo que debatimos pero consideramos que tanto las propiedades 5 como la 6
+deberían quedar formuladas así:
+forall (ma : madd) (pg : page) (pa : padd) (pm : padd -> option madd),
+      (hypervisor s) (active_os s) = Some pm
+      /\ pm pa = Some ma
+      /\ memory s ma = Some pg
+      -> page_owned_by pg = Os (active_os s)
+         /\ inyective pm.
+
+  forall (pg pg' : page) (vtm : vadd -> option madd) (va : vadd) (ma : madd) (o : os_ident),
+    page_content pg = PT vtm 
+    /\ page_owned_by pg = Os o
+    /\ vtm va = Some ma
+    /\ memory s ma = Some pg'
+    -> (ctxt_vadd_accessible ctxt va = true -> page_owned_by pg' = Os o)
+        /\ (ctxt_vadd_accessible ctxt va = false -> page_owned_by pg' = Hyp).
+
+Pero la realidad es que con esta variante del valid_state_v no pudimos
+probar read_isolation
+*)
+
   Definition valid_state (s : State) : Prop :=
     valid_state_iii s /\ valid_state_v s /\ valid_state_vi s.
 
@@ -121,68 +143,100 @@ Definition valid_state_vi (s : State) : Prop :=
   intros.
   destruct H.
   induction a.
+
+  (*Read*)
   - simpl in H1.
     rewrite H1 in H.
     unfold valid_state in H.
     elim H. intros.
     exact H2.
+  
+  (*Write*)
   - inversion H0.
-    elim H3. intros.
-    inversion H1. elim H6. intros.
-    unfold differ_at_most_memory in H8.
-    elim H8. intros. elim H10. intros. elim H12. intros.
+    elim H3. intros. clear H3.
+    inversion H1. elim H3. intros. clear H3.
+    elim H7. intros. clear H7.
+    elim H8. intros. clear H8. elim H9. intros. clear H9.
+    elim H10. intros. clear H10. clear H11.
     unfold valid_state in H.
     unfold valid_state_iii in H.
-    elim H. intros.
-    unfold valid_state_iii. intros. (*Dejamos las hipótesis como nos interesan*)
-    elim H17. (* Vemos caso waiting or running *)
-      -- rewrite <- H11. rewrite H4. discriminate. (*Sabemos que esta running*)
-      -- intros. elim H18. intros.
-         rewrite <- H13. (*Probamos que vale viendo que vale exec mode s = svc*)
-         apply H15. (*y para probar eso usamos que para s' vale trusted_os*)
+    elim H. intros. clear H11.
+    unfold valid_state_iii. intros.
+    clear H2. clear H5. clear H6. clear H3. 
+
+    (* Vemos caso waiting o running y trusted *)
+    elim H11.
+
+      (*Sabemos que esta running*)
+      -- rewrite <- H7. rewrite H4. discriminate.
+
+      (*Probamos que vale viendo que vale exec mode s = svc 
+        usando que para s' vale trusted_os y que sus exec
+        modes son iguales*)
+      -- clear H7.
+         intros. elim H2. intros.
+         rewrite <- H8.
+         apply H10.
          right.
          split.
           --- exact H4.
           --- unfold trusted_os.
-              elim H14. intros.
-              rewrite H21.
-              exact H20.
-  - inversion H1; elim H2; intros; unfold differ_in_state in H4;
-      elim H4; intros. (*Analizamos por casos si es trusted os s o no*)
+              rewrite H9. exact H5.
+
+  (*Chmod*)
+  - inversion H1. elim H2. intros. clear H2. unfold differ_in_state in H4.
+    (*Sacamos la información que queremos de differ_in_state*)
+    elim H4. intros. clear H4. elim H5. intros. clear H5. clear H6.
+      elim H3.
+
+    (*Analizamos por casos si es trusted os s o no*)
+
     -- unfold valid_state_iii. intros.
-       exact H5. (*Por el differ_in_state sabemos que esta en svc*)
-    -- elim H6. intros. elim H8. intros.
+       exact H2. 
+
+    -- elim H2. intros. clear H2.
        unfold valid_state_iii. intros.
-       elim H11; intros. (*Vemos si esta waiting or running y trusted*)
+
+       elim H4. intros. clear H4. elim H6. intros. clear H6. elim H7. intros. clear H7. clear H8.
+
+       (*Vemos caso waiting o running y trusted*)
+       elim H2; intros. 
         --- absurd (aos_activity s' = waiting). (*sabemos que esta running*)
-          rewrite H7. discriminate. (*por lo que absurdo que waiting*)
-          exact H12.
+            ---- rewrite H4 in H7. discriminate.
+            ---- exact H7.
         --- unfold trusted_os in H3. (*Usamos que no trusted_os de s*)
-          rewrite H9 in H3. (*para probar que no trusted_os de s'*)
-          elim H12. intros. (*y como por hip de --- es trusted*)
-          absurd (trusted_os ctxt s'). (*tenemos contradicción*)
-          exact H3.
-          exact H14.
+            rewrite H6 in H3. (*para probar que no trusted_os de s'*)
+            elim H7. intros. clear H7. (*y como por hip de --- es trusted*)
+            absurd (trusted_os ctxt s'). (*tenemos contradicción*)
+            ---- exact H3.
+            ---- exact H9.
  Qed.
 
   Theorem read_isolation : forall (s s' : State) (va : vadd), read va ⇒ s ↪ s' -> 
   exists ma: madd, va_mapped_to_ma s va ma /\ exists pg: page, Some pg = (memory s) ma /\ (page_owned_by pg) = Os (active_os s).
   Proof.
+
   intros.
   inversion H.
   inversion H2.
   rewrite <- H6.
-  unfold Pre in H1.
   elim H1. intros. elim H8. intros.
   elim H10. intros.
   elim H11. intros.
+
   exists x.
   split.
+
+  (*Sabemos que vale el mapeo por la Pre de read*)
   - exact H12.
+  
+  (*Vemos que la pagina a la que apunta, gracias al valid state 5,
+   es del SO*)
   - destruct (memory s x).
     -- exists p.
        split.
        --- reflexivity.
+
        --- unfold valid_state in H0.
            elim H0. intros. elim H15. intros.
            unfold valid_state_v in H16.
