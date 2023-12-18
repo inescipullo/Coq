@@ -2,6 +2,9 @@
  * Este archivo especifica las acciones Como transformadores de estado.
  * LAS DEFINICIONES DADAS PUEDEN SER USADAS DIRECTAMENTE O CAMBIADAS.
  ******************************************************************)
+(* Entrega Práctico 7 - CFPTT *)
+(* Alumnas: Cipullo, Inés - Sullivan, Katherine *)
+
 Load "/home/administrador/Documentos/Coq/Practica7/State".
 (* Load "/Users/inescipullo/Documents_/Coq/Practica7/State". *)
 

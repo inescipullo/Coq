@@ -2,6 +2,8 @@
  * Este archivo especifica el estado y los elementos relacionados.
  * LAS DEFINCIONES DADAS PUEDEN SER USADAS DIRECTAMENTE O CAMBIADAS. 
  ******************************************************************)
+(* Entrega Práctico 7 - CFPTT *)
+(* Alumnas: Cipullo, Inés - Sullivan, Katherine *)
 
 (* Shortcut notation for partial functions *)
 Definition partial a b := a -> option b.
